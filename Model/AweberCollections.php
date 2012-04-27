@@ -24,12 +24,16 @@ class AweberCollections extends AweberAppModel {
 	 *
 	 * https://labs.aweber.com/docs/reference/1.0#lists
 	 **/
-	public function getLists() {
-		$cacheKey = $this->_generateCacheKey('getLists');
+	public function getLists($options = array()) {
+		$cacheKey = $this->_generateCacheKey('getLists', $options);
 		if (($data = Cache::read($cacheKey)) === false) {
 			$path = array();
 			$path[] = 'accounts';
-			$path[] = Set::extract($this->getAccounts(), 'entries.0.id');
+			if (isset($options['account_id'])) {
+				$path[] = $options['account_id'];
+			} else {
+				$path[] = Set::extract($this->getAccounts(), 'entries.0.id');
+			}
 			$path[] = 'lists';
 			$data = $this->find('all', array(
 				'path' => implode('/', $path)
@@ -45,14 +49,22 @@ class AweberCollections extends AweberAppModel {
 	 *
 	 * https://labs.aweber.com/docs/reference/1.0#subscribers
 	 **/
-	public function getSubscribers($query = array()) {
-		$cacheKey = $this->_generateCacheKey('getSubscribers');
+	public function getSubscribers($query = array(), $options = array()) {
+		$cacheKey = $this->_generateCacheKey('getSubscribers', am($query, $options));
 		if (($data = Cache::read($cacheKey)) === false) {
 			$path = array();
 			$path[] = 'accounts';
-			$path[] = Set::extract($this->getAccounts(), 'entries.0.id');
+			if (isset($options['account_id'])) {
+				$path[] = $options['account_id'];
+			} else {
+				$path[] = Set::extract($this->getAccounts(), 'entries.0.id');
+			}
 			$path[] = 'lists';
-			$path[] = Set::extract($this->getLists(), 'entries.0.id');
+			if (isset($options['list_id'])) {
+				$path[] = $options['list_id'];
+			} else {
+				$path[] = Set::extract($this->getLists(), 'entries.0.id');
+			}
 			$path[] = 'subscribers';
 			$data = $this->find('all', array(
 				'path' => implode('/', $path),
@@ -69,7 +81,7 @@ class AweberCollections extends AweberAppModel {
 	 *
 	 * https://labs.aweber.com/docs/reference/1.0#subscribers
 	 **/
-	public function setSubscriber($query = array()) {
+	public function setSubscriber($query = array(), $options = array()) {
 		if (empty($query['email'])) {
 			return false;
 		}
@@ -81,8 +93,16 @@ class AweberCollections extends AweberAppModel {
 		App::import('Vendor', 'Aweber.aweber/aweber_api/aweber');
 		$aweber = new AWeberAPI($consumerKey, $consumerSecret);
 		$account = $aweber->getAccount($accessKey, $accessSecret);
-		$account_id = Set::extract($this->getAccounts(), 'entries.0.id');
-		$list_id = Set::extract($this->getLists(), 'entries.0.id');
+		if (isset($options['account_id'])) {
+			$account_id = $options['account_id'];
+		} else {
+			$account_id = Set::extract($this->getAccounts(), 'entries.0.id');
+		}
+		if (isset($options['list_id'])) {
+			$list_id = $options['list_id'];
+		} else {
+			$list_id = Set::extract($this->getLists(), 'entries.0.id');
+		}
 		$list = $account->loadFromUrl("/accounts/{$account_id}/lists/{$list_id}");
 		$subscribers = $list->subscribers;
 		$new_subscriber = $subscribers->create($query);

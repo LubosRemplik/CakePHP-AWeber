@@ -9,7 +9,6 @@ class AweberController extends AppController {
 	public $components = array(
 		'Apis.Oauth' => 'aweber',
 		'Encrypt.Decrypt',
-		'Frontpage.Frontpage'
 	);
 
 	public function beforeFilter() {
